@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: CloudFormation template for a Lambda function that generates a random number.
+
+Resources:
+
+  GenerateRandomNumber:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Description: Lambda function to generate a random number
+      MemorySize: 128
+      Timeout: 3
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      PackageType: Zip
+      InlineCode: |
+        exports.handler = async (event) => {
+          const randomNumber = Math.floor(Math.random() * 100) + 1;
+          return `{"randomNumber":${randomNumber}}`;
+        };
+
+Outputs:
+  GenerateRandomNumberFunctionArn:
+    Description: The ARN of the Lambda function
+    Value: !GetAtt GenerateRandomNumber.Arn
