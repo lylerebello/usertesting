@@ -1,33 +1,47 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: CloudFormation template for a Lambda function that generates a random number.
+Description: Deploy a Lambda function that generates a random number
 
 Resources:
-
-  GenerateRandomNumber:
-    Type: AWS::Serverless::Function
+  RandomNumberFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      CodeUri: .
-      Description: Lambda function to generate a random number
+      FunctionName: GenerateRandomNumber
+      Runtime: python3.9
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: |
+          import json
+          import random
+
+          def lambda_handler(event, context):
+              # Generate a random number
+              random_number = random.randint(1, 10)
+              
+              # Create the JSON object
+              output = {
+                  "randomNumber": random_number
+              }
+              
+              # Return the JSON object
+              return output
       MemorySize: 128
-      Timeout: 3
-      Handler: index.handler
-      Runtime: nodejs20.x
-      Architectures:
-        - x86_64
-      EphemeralStorage:
-        Size: 512
-      EventInvokeConfig:
-        MaximumEventAgeInSeconds: 21600
-        MaximumRetryAttempts: 2
-      PackageType: Zip
-      InlineCode: |
-        exports.handler = async (event) => {
-          const randomNumber = Math.floor(Math.random() * 100) + 1;
-          return `{"randomNumber":${randomNumber}}`;
-        };
+      Timeout: 30
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
 Outputs:
-  GenerateRandomNumberFunctionArn:
+  LambdaFunctionArn:
     Description: The ARN of the Lambda function
-    Value: !GetAtt GenerateRandomNumber.Arn
+    Value: !GetAtt RandomNumberFunction.Arn
